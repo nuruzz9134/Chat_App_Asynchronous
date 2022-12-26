@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<body>
+    
+    <h1>Group Name : {{groupname}}</h1>
+    
+    <textarea id="chat-log" cols="100" rows="20">
+        {%for chat in chats %}
+            {{chat.content}}
+        {% endfor %}
+    </textarea><br>
+
+    <input type="text" id="chat-message-input" size="100">
+    <br>
+    <input type="button" value="send" id="chat-message-submit">
+    {{groupname|json_script:"group__name"}}
+
+
+    <script>
+        const groupName = JSON.parse(document.getElementById('group__name').textContent)
+        console.log(" groupName....",groupName)
+
+        {% comment %}    
+        
+
+        var ws = new WebSocket(
+            'ws://127.0.0.1:8000/ws/chat/' + groupName + '/'
+            );                              
+            
+        {% endcomment %}     
+
+        var ws = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/' + groupName + '/'
+            )
+
+
+        ws.onopen = function(){
+            console.log("Websocket connection Open ....")
+        }
+
+        ws.onmessage = function(event){
+            console.log("event : ",event)
+            const data = JSON.parse(event.data)  // string to object
+
+            console.log(data.user,'>>>>>>>>',data.msg)
+
+            document.querySelector('#chat-log').value += (data.user + ":" + data.msg + '\n')
+
+
+        }
+
+        ws.onclose = function(event){
+            console.error("Websocket Connection Closed Unexpectedly...",)
+        };
+
+        document.getElementById('chat-message-submit').onclick =
+        function(event){
+            const messageInputDom = document.getElementById
+            ('chat-message-input')
+            const message = messageInputDom.value
+            ws.send(JSON.stringify({    // object to string
+                'msg':message
+            }))
+            messageInputDom.value = ''
+        }
+
+    </script>
+</body>
+</html>
